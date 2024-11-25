@@ -1,9 +1,12 @@
 from Controllers.user_controller import UserController
 from Controllers.recipe_controller import RecipeController
+from Controllers.review_controller import ReviewController  # Tambahan untuk ulasan
+
 
 def main_menu():
     user_controller = UserController()
     recipe_controller = RecipeController()
+    review_controller = ReviewController()  # Instance untuk ulasan
     logged_in_user = None
 
     while True:
@@ -14,7 +17,9 @@ def main_menu():
         else:
             print("1. Tambah Resep")
             print("2. Lihat Daftar Resep")
-            print("3. Logout")
+            print("3. Tambahkan Ulasan")
+            print("4. Lihat Ulasan Resep")
+            print("5. Logout")
         print("0. Keluar")
         print("\n ===== Recipe Finder ===== \n")
         choice = input("Pilih opsi: ")
@@ -30,6 +35,10 @@ def main_menu():
             else:
                 recipe_controller.list_recipes()
         elif choice == "3" and logged_in_user:
+            add_review(review_controller, logged_in_user["id"])
+        elif choice == "4" and logged_in_user:
+            view_reviews(review_controller)
+        elif choice == "5" and logged_in_user:
             print("Logout berhasil.")
             logged_in_user = None
         elif choice == "0":
@@ -37,6 +46,38 @@ def main_menu():
             break
         else:
             print("Pilihan tidak valid.")
+
+
+def add_review(review_controller, user_id):
+    """Tambahkan ulasan untuk resep."""
+    try:
+        recipe_id = int(input("Masukkan ID resep yang ingin diulas: "))
+        rating = int(input("Masukkan penilaian (1-5): "))
+        if rating < 1 or rating > 5:
+            print("Penilaian harus antara 1 dan 5!")
+            return
+        review_text = input("Masukkan ulasan Anda: ")
+        review_controller.add_review(recipe_id, user_id, rating, review_text)
+        print("Ulasan berhasil ditambahkan!")
+    except ValueError:
+        print("Input tidak valid. Masukkan angka untuk ID resep dan penilaian.")
+
+
+def view_reviews(review_controller):
+    """Lihat ulasan untuk resep tertentu."""
+    try:
+        recipe_id = int(input("Masukkan ID resep untuk melihat ulasan: "))
+        reviews, avg_rating = review_controller.view_reviews(recipe_id)
+        print(f"\n===== Ulasan untuk Resep ID {recipe_id} =====")
+        if reviews:
+            for review in reviews:
+                print(f"{review['username']} memberi {review['rating']} bintang: {review['review_text']}")
+            print(f"Rata-rata rating: {avg_rating:.1f}")
+        else:
+            print("Belum ada ulasan untuk resep ini.")
+    except ValueError:
+        print("Input tidak valid. Masukkan angka untuk ID resep.")
+
 
 def post_login_menu(role, username):
     from datetime import datetime
@@ -71,6 +112,7 @@ def post_login_menu(role, username):
     print("0. Keluar")
     pilihan = input("Pilih opsi: ")
     handle_post_login_menu(pilihan, role, username)
+
 
 def handle_post_login_menu(pilihan, role, username):
     if role == "chef":
